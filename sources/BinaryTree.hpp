@@ -272,3 +272,7 @@ ostream &operator<<(ostream &os, BinaryTree<T> const &bnrtree) {
   return os << out << endl;
 }
 } // namespace ariel
+
+
+
+

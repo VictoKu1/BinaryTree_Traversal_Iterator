@@ -4,7 +4,6 @@
  * @author Erel Segal-Halevi
  * @since 2021-04
  */
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -32,7 +31,7 @@ int main() {
 |---|
 4   5
 */
-auto it = tree_of_ints.begin_preorder();
+  auto it = tree_of_ints.begin_preorder();
   for (auto it = tree_of_ints.begin_preorder();
        it != tree_of_ints.end_preorder(); ++it) {
     cout << (*it) << " ";
@@ -86,3 +85,4 @@ auto it = tree_of_ints.begin_preorder();
     cout << element << " ";
   } // prints: 4 2 5 1 3
 }
+

@@ -36,50 +36,50 @@ TEST_CASE("Basic Test Integer.") {
   sAn = "4 5 2 3 1 ";
   CHECK(s == sAn);
   s = "";
-  for (int element : tree_of_ints) { // this should work like inorder
+  for (int element : tree_of_ints) {
     s += to_string(element) + " ";
   }
   sAn = "4 2 5 1 3 ";
   CHECK(s == sAn);
 }
 TEST_CASE("Basic Test String.") {
-  BinaryTree<string> tree_of_ints;
-  CHECK_NOTHROW(tree_of_ints.add_root("1"));
-  CHECK_NOTHROW(tree_of_ints.add_left("1", "9"));
-  CHECK_NOTHROW(tree_of_ints.add_left("9", "4"));
-  CHECK_NOTHROW(tree_of_ints.add_right("9", "5"));
-  CHECK_NOTHROW(tree_of_ints.add_right("1", "3"));
-  CHECK_NOTHROW(tree_of_ints.add_left("1", "2"));
-  auto it = tree_of_ints.begin_preorder();
+  BinaryTree<string> tree_of_string;
+  CHECK_NOTHROW(tree_of_string.add_root("1"));
+  CHECK_NOTHROW(tree_of_string.add_left("1", "9"));
+  CHECK_NOTHROW(tree_of_string.add_left("9", "4"));
+  CHECK_NOTHROW(tree_of_string.add_right("9", "5"));
+  CHECK_NOTHROW(tree_of_string.add_right("1", "3"));
+  CHECK_NOTHROW(tree_of_string.add_left("1", "2"));
+  auto it = tree_of_string.begin_preorder();
   string s = "";
-  for (auto it = tree_of_ints.begin_preorder();
-       it != tree_of_ints.end_preorder(); ++it) {
+  for (auto it = tree_of_string.begin_preorder();
+       it != tree_of_string.end_preorder(); ++it) {
     s += (*it) + " ";
   }
   string sAn = "1 2 4 5 3 ";
   CHECK(s == sAn);
   s = "";
-  for (auto it = tree_of_ints.begin_inorder(); it != tree_of_ints.end_inorder();
-       ++it) {
+  for (auto it = tree_of_string.begin_inorder();
+       it != tree_of_string.end_inorder(); ++it) {
     s += (*it) + " ";
   }
   sAn = "4 2 5 1 3 ";
   CHECK(s == sAn);
   s = "";
-  for (auto it = tree_of_ints.begin_postorder();
-       it != tree_of_ints.end_postorder(); ++it) {
+  for (auto it = tree_of_string.begin_postorder();
+       it != tree_of_string.end_postorder(); ++it) {
     s += (*it) + " ";
   }
   sAn = "4 5 2 3 1 ";
   CHECK(s == sAn);
   s = "";
-  for (string element : tree_of_ints) { // this should work like inorder
+  for (string element : tree_of_string) {
     s += element + " ";
   }
   sAn = "4 2 5 1 3 ";
   CHECK(s == sAn);
-  CHECK_THROWS(tree_of_ints.add_left("0", "1"));
-  CHECK_THROWS(tree_of_ints.add_left("7", "0"));
+  CHECK_THROWS(tree_of_string.add_left("0", "1"));
+  CHECK_THROWS(tree_of_string.add_left("7", "0"));
 }
 
 TEST_CASE("Basic Test Letters.") {
@@ -116,43 +116,11 @@ TEST_CASE("Basic Test Letters.") {
   sAn = "p q h r s i d t u j v w k e b x y l m f n o g c a ";
   CHECK(s == sAn);
   s = "";
-  for (char element : tree_of_ints) { // this should work like inorder
+  for (char element : tree_of_ints) {
     s.push_back(element);
     s += " ";
   }
   sAn = "p h q d r i s b t j u e v k w a x l y f m c n g o ";
   CHECK(s == sAn);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

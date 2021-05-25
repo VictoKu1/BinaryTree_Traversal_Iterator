@@ -27,8 +27,6 @@ private:
       left = node.left;
     }
   };
-
-private:
   bool setWasChanged = true;
   map<T, Node *> nodeMap;
   Node *root;
@@ -60,7 +58,7 @@ public:
   Iterator end();
   template <typename P>
   friend ostream &operator<<(ostream &os, BinaryTree<P> const &root);
-  void print2D(Node *root);
+  void print2D(Node *bnrtree);
 };
 
 class coutRedirect {
@@ -70,10 +68,10 @@ public:
   coutRedirect() {
     old = std::cout.rdbuf(buffer.rdbuf()); //*Redirect cout to buffer stream.
   }
-  std::string getString() {
+  std::string getString() const {
     return buffer.str(); //*Get string .
   }
-  void coutRedirectCancel() {
+  void coutRedirectCancel() const {
     std::cout.rdbuf(old); //*Reverse redirect .
   }
 };
@@ -231,9 +229,9 @@ template <typename T> typename list<T>::iterator BinaryTree<T>::end() {
 template <typename T> void BinaryTree<T>::print2DUtil(Node *root, int space) {
   const int COUNT = 5;
   //*Base case .
-  if (root == NULL)
+  if (root == NULL) {
     return;
-
+  }
   //*Increase distance between levels .
   space += COUNT;
 

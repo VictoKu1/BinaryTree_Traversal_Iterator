@@ -1,9 +1,11 @@
 #pragma once
+#include <exception>
 #include <iostream>
 #include <list>
 #include <map>
 #include <ostream>
 #include <sstream>
+#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 #include <streambuf>
@@ -20,13 +22,55 @@ private:
     Node *right;
     Node *left;
     T data;
+
+    void deleter() {
+      if (left != nullptr) {
+        delete left;
+      }
+      if (right != nullptr) {
+        delete right;
+      }
+    }
+
+    //*Constructor.
     Node(T data) : data(data), right(nullptr), left(nullptr) {}
-    Node(Node const &node) {
+
+    //*Copy Constructor .
+    Node(Node const &node) : data(node.data), right(nullptr), left(nullptr) {
+      if (node.left != nullptr) {
+        left = new Node(*node.left);
+      }
+      if (node.right != nullptr) {
+        right = new Node(*node.right);
+      }
+    }
+
+    //*Move Copy Constructor.
+    Node(Node &&node) noexcept {
       data = node.data;
       right = node.right;
       left = node.left;
     }
+
+    //*Distructor.
+    ~Node() {}
+
+    //*Move Assignment.
+    Node &operator=(const Node &other) noexcept {
+      deleter();
+      this = Node(other);
+      return *this;
+    }
+
+    //*Move Assignment Operator.
+    Node &operator=(Node &&other) noexcept {
+      deleter();
+      this = Node(move(other));
+      other.deleter();
+      return *this;
+    }
   };
+
   bool setWasChanged = true;
   map<T, Node *> nodeMap;
   Node *root;
@@ -39,12 +83,52 @@ private:
   void print2DUtil(Node *root, int space);
 
 public:
+  //*Constructor.
   BinaryTree<T>() : root(nullptr), nodeMap(), itr() {}
+
+  //*Move Constructor .
+  BinaryTree<T>(BinaryTree<T> &&bnrtree) noexcept {
+    root = bnrtree.root;
+    itr = bnrtree.itr;
+    nodeMap = bnrtree.nodeMap;
+    for (auto const &i : bnrtree.nodeMap) {
+      (*i).second = nullptr;
+    }
+    bnrtree.nodeMap.clear();
+    bnrtree.itr.clear();
+  }
+
+  //*Copy Constructor .
+  BinaryTree<T>(BinaryTree<T> &bnrtree) {
+    add_root(bnrtree.root->data);
+    while (nodeMap.size() != bnrtree.nodeMap.size()) {
+      for (auto const &i : bnrtree.nodeMap) {
+        try {
+          if (contains((*i).first)) {
+            T f = (*i).first;
+            if (contains((*i).seconds->left->data)) {
+              T sl = (*i).second->left->data;
+              add_left(f, sl);
+            }
+            if (contains((*i).seconds->right->data)) {
+              T rl = (*i).second->left->data;
+              add_right(f, rl);
+            }
+          }
+        } catch (const invalid_argument &e) {
+          continue;
+        }
+      }
+    }
+  }
+
+  //*Distructor.
   ~BinaryTree<T>() {
     for (auto const &i : nodeMap) {
       delete i.second;
     }
   }
+
   BinaryTree &add_root(T value);
   BinaryTree &add_left(T pos, T value);
   BinaryTree &add_right(T pos, T value);
@@ -57,10 +141,37 @@ public:
   Iterator begin();
   Iterator end();
   template <typename P>
-  friend ostream &operator<<(ostream &os, BinaryTree<P> const &root);
+  friend ostream &operator<<(ostream &os, BinaryTree<P> &root);
   void print2D(Node *bnrtree);
+
+  //*Assignment Operator .
+  BinaryTree &operator=(const BinaryTree &other) noexcept {
+    for (auto const &i : nodeMap) {
+      delete (*i).second;
+    }
+    this = BinaryTree<T>(other);
+    return *this;
+  }
+
+  //*Move Assignment Operator.
+  BinaryTree &operator=(BinaryTree &&other) noexcept {
+    for (auto const &i : nodeMap) {
+      delete (*i).second;
+    }
+    root = other.root;
+    itr = other.itr;
+    nodeMap = other.nodeMap;
+    setWasChanged = true;
+    for (auto const &i : other.nodeMap) {
+      (*i).second = nullptr;
+    }
+    other.nodeMap.clear();
+    other.itr.clear();
+    return *this;
+  }
 };
 
+//*Helper class for redirecting cout stream to string .
 class coutRedirect {
 public:
   std::stringstream buffer;
@@ -76,14 +187,16 @@ public:
   }
 };
 
+//*Boolean method which is checking if the given key is contained in this tree .
 template <typename T> bool BinaryTree<T>::contains(T key) {
   return nodeMap.count(key) > 0;
 }
 
+//* Method which is moving a value in nodeMap from key source to destination .
 template <typename T>
 void BinaryTree<T>::moveN(T source, T destination, Node *father,
                           Direction direction) {
-  nodeMap[destination] = new Node(*nodeMap[source]);
+  nodeMap[destination] = new Node(move(*nodeMap[source]));
   delete nodeMap[source];
   nodeMap[source] = nullptr;
   nodeMap[destination]->data = destination;
@@ -94,6 +207,7 @@ void BinaryTree<T>::moveN(T source, T destination, Node *father,
   }
 }
 
+//*Method which reorganize the iterator list by this tree preoprder scan.
 template <typename T> void BinaryTree<T>::preorder(Node *node) {
   if (node == nullptr) {
     return;
@@ -103,6 +217,7 @@ template <typename T> void BinaryTree<T>::preorder(Node *node) {
   preorder((*node).right);
 }
 
+//*Method which reorganize the iterator list by this tree inoprder scan.
 template <typename T> void BinaryTree<T>::inorder(Node *node) {
   if (node == nullptr) {
     return;
@@ -112,6 +227,7 @@ template <typename T> void BinaryTree<T>::inorder(Node *node) {
   inorder((*node).right);
 }
 
+//*Method which reorganize the iterator list by this tree postoprder scan.
 template <typename T> void BinaryTree<T>::postorder(Node *node) {
   if (node == nullptr) {
     return;
@@ -121,6 +237,8 @@ template <typename T> void BinaryTree<T>::postorder(Node *node) {
   itr.push_back((*node).data);
 }
 
+//*Method which adds a new root node the the tree, in case the root already
+//*exists the method will only change its data parameter to the given one .
 template <typename T> BinaryTree<T> &BinaryTree<T>::add_root(T value) {
   if (root == nullptr) {
     root = new Node(value);
@@ -133,6 +251,7 @@ template <typename T> BinaryTree<T> &BinaryTree<T>::add_root(T value) {
   return *this;
 }
 
+//*Method which adds a left child node to the node with data parameter pos .
 template <typename T> BinaryTree<T> &BinaryTree<T>::add_left(T pos, T value) {
   if (contains(pos)) {
     if (nodeMap[pos]->left == nullptr) {
@@ -149,6 +268,7 @@ template <typename T> BinaryTree<T> &BinaryTree<T>::add_left(T pos, T value) {
   return *this;
 }
 
+//*Method which adds a right child node to the node with data parameter pos .
 template <typename T> BinaryTree<T> &BinaryTree<T>::add_right(T pos, T value) {
   if (contains(pos)) {
     if (nodeMap[pos]->right == nullptr) {
@@ -165,6 +285,7 @@ template <typename T> BinaryTree<T> &BinaryTree<T>::add_right(T pos, T value) {
   return *this;
 }
 
+//* Method which returnes an iterator to the first node in preorder tree scan .
 template <typename T>
 typename list<T>::iterator BinaryTree<T>::begin_preorder() {
   itr.clear();
@@ -173,6 +294,7 @@ typename list<T>::iterator BinaryTree<T>::begin_preorder() {
   return itr.begin();
 }
 
+//* Method which returnes an iterator to the last node in preorder tree scan .
 template <typename T> typename list<T>::iterator BinaryTree<T>::end_preorder() {
   if (setWasChanged) {
     begin_preorder();
@@ -180,6 +302,7 @@ template <typename T> typename list<T>::iterator BinaryTree<T>::end_preorder() {
   return itr.end();
 }
 
+//* Method which returnes an iterator to the first node in inorder tree scan .
 template <typename T>
 typename list<T>::iterator BinaryTree<T>::begin_inorder() {
   itr.clear();
@@ -188,6 +311,7 @@ typename list<T>::iterator BinaryTree<T>::begin_inorder() {
   return itr.begin();
 }
 
+//* Method which returnes an iterator to the last node in inorder tree scan .
 template <typename T> typename list<T>::iterator BinaryTree<T>::end_inorder() {
   if (setWasChanged) {
     begin_inorder();
@@ -195,6 +319,7 @@ template <typename T> typename list<T>::iterator BinaryTree<T>::end_inorder() {
   return itr.end();
 }
 
+//* Method which returnes an iterator to the first node in postorder tree scan .
 template <typename T>
 typename list<T>::iterator BinaryTree<T>::begin_postorder() {
   itr.clear();
@@ -203,6 +328,7 @@ typename list<T>::iterator BinaryTree<T>::begin_postorder() {
   return itr.begin();
 }
 
+//* Method which returnes an iterator to the last node in postorder tree scan .
 template <typename T>
 typename list<T>::iterator BinaryTree<T>::end_postorder() {
   if (setWasChanged) {
@@ -211,12 +337,14 @@ typename list<T>::iterator BinaryTree<T>::end_postorder() {
   return itr.end();
 }
 
+//* Method which returnes an iterator to the first node in inorder tree scan .
 template <typename T> typename list<T>::iterator BinaryTree<T>::begin() {
   itr.clear();
   begin_inorder();
   return itr.begin();
 }
 
+//* Method which returnes an iterator to the last node in inorder tree scan .
 template <typename T> typename list<T>::iterator BinaryTree<T>::end() {
   if (setWasChanged) {
     begin_inorder();
@@ -263,18 +391,14 @@ template <typename T> void BinaryTree<T>::print2D(Node *bnrtree) {
   print2DUtil(root, 0);
 }
 
-template <typename T>
-ostream &operator<<(ostream &os, BinaryTree<T> const &bnrtree) {
+//*Method returnes a stream of the tree visualization .
+template <typename T> ostream &operator<<(ostream &os, BinaryTree<T> &bnrtree) {
   coutRedirect redirection;
-  (const_cast<BinaryTree<T> &>(bnrtree)).print2D(bnrtree.root);
+  (bnrtree).print2D(bnrtree.root);
   string out = redirection.getString();
   redirection.coutRedirectCancel();
   return os << out << endl;
 }
 } // namespace ariel
-
-
-
-
 
 

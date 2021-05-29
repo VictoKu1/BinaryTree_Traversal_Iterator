@@ -23,12 +23,17 @@ private:
     Node *left;
     T data;
 
-    void deleter() {
-      if (left != nullptr) {
-        delete left;
+    void deleter(Node *node) {
+      if (node == nullptr) {
+        return;
       }
-      if (right != nullptr) {
-        delete right;
+      if ((*node).left != nullptr) {
+        deleter((*node).left);
+        delete (*node).left;
+      }
+      if ((*node).right != nullptr) {
+        deleter((*node).right);
+        delete (*node).right;
       }
     }
 
@@ -36,7 +41,8 @@ private:
     Node(T data) : data(data), right(nullptr), left(nullptr) {}
 
     //*Copy Constructor .
-    Node(Node const &node) : data(node.data), right(nullptr), left(nullptr) {
+    Node(Node const &node) {
+      data = T(node.data);
       if (node.left != nullptr) {
         left = new Node(*node.left);
       }
@@ -46,28 +52,56 @@ private:
     }
 
     //*Move Copy Constructor.
-    Node(Node &&node) noexcept {
-      data = node.data;
-      right = node.right;
-      left = node.left;
-    }
+    Node(Node &&node) noexcept
+        : data(node.data), right(node.right), left(node.left) {}
 
     //*Distructor.
-    ~Node() {}
+    ~Node() { /*deleter((*this).root);*/
+    }
 
     //*Move Assignment.
     Node &operator=(const Node &other) noexcept {
-      deleter();
-      this = Node(other);
-      return *this;
+      Node *leftN = nullptr;
+      Node *rightN = nullptr;
+      try {
+        // if (node.left != nullptr) {
+        leftN = new Node(*other.left);
+        // }
+        // if (node.right != nullptr) {
+        rightN = new Node(*other.right);
+        //  }
+      } catch (...) {
+        delete leftN;
+        delete rightN;
+      }
+      data = T(other).data;
+      swap(left, leftN);
+      swap(right, rightN);
+      delete leftN;
+      delete rightN;
+      deleter((*other).root);
     }
 
     //*Move Assignment Operator.
     Node &operator=(Node &&other) noexcept {
-      deleter();
-      this = Node(move(other));
-      other.deleter();
+      deleter(this);
+      this = new Node(move(other));
+      other.deleter(other.root);
       return *this;
+    }
+
+    bool operator==(const Node &other) {
+      if (this == nullptr && other == nullptr) {
+        return true;
+      }
+      if ((other != nullptr && this == nullptr) ||
+          (other == nullptr && this != nullptr)) {
+        return false;
+      }
+      if (data != other.data) {
+        return false;
+      }
+      return right == other.right && left == other.left;
     }
   };
 
@@ -81,37 +115,26 @@ private:
   void inorder(Node *node);
   void postorder(Node *node);
   void print2DUtil(Node *root, int space);
+  void fillMap(Node *node);
 
 public:
   //*Constructor.
   BinaryTree<T>() : root(nullptr), nodeMap(), itr() {}
 
-  //*Move Constructor .
-  BinaryTree<T>(BinaryTree<T> &&bnrtree) noexcept {
-    root = bnrtree.root;
-    itr = bnrtree.itr;
-    nodeMap = bnrtree.nodeMap;
-    for (auto const &i : bnrtree.nodeMap) {
-      (*i).second = nullptr;
-    }
-    bnrtree.nodeMap.clear();
-    bnrtree.itr.clear();
-  }
-
   //*Copy Constructor .
-  BinaryTree<T>(BinaryTree<T> &bnrtree) {
+  BinaryTree<T>(BinaryTree<T> const &bnrtree) {
     add_root(bnrtree.root->data);
     while (nodeMap.size() != bnrtree.nodeMap.size()) {
       for (auto const &i : bnrtree.nodeMap) {
         try {
-          if (contains((*i).first)) {
-            T f = (*i).first;
-            if (contains((*i).seconds->left->data)) {
-              T sl = (*i).second->left->data;
+          if (contains(i.second->data)) {
+            T f = i.first;
+            if (contains(i.second->left->data)) {
+              T sl = i.second->left->data;
               add_left(f, sl);
             }
-            if (contains((*i).seconds->right->data)) {
-              T rl = (*i).second->left->data;
+            if (contains(i.second->right->data)) {
+              T rl = i.second->left->data;
               add_right(f, rl);
             }
           }
@@ -120,6 +143,44 @@ public:
         }
       }
     }
+  }
+
+  //*Move Constructor .
+  BinaryTree<T>(BinaryTree<T> &&bnrtree) noexcept {
+    nodeMap.clear();
+    root = move(bnrtree.root);
+    fillmap(root);
+    bnrtree.nodeMap.clear();
+    bnrtree.itr.clear();
+    setWasChanged = true;
+  }
+
+  //*Assignment Operator .
+  BinaryTree &operator=(const BinaryTree &other) noexcept {
+    for (auto const &i : nodeMap) {
+      delete i.second;
+    }
+    // root = new Node((*other).root);
+    nodeMap.clear();
+    // fillMap(root);
+    root = other.root;
+    nodeMap = other.nodeMap;
+    return *this;
+  }
+
+  //*Move Assignment Operator.
+  BinaryTree &operator=(BinaryTree &&other) noexcept {
+    for (auto const &i : nodeMap) {
+      delete (*i).second;
+    }
+    root = move(other.root);
+    itr.clear();
+    nodeMap.clear();
+    setWasChanged = true;
+    fillMap(root);
+    other.nodeMap.clear();
+    other.itr.clear();
+    return *this;
   }
 
   //*Distructor.
@@ -144,33 +205,29 @@ public:
   friend ostream &operator<<(ostream &os, BinaryTree<P> &root);
   void print2D(Node *bnrtree);
 
-  //*Assignment Operator .
-  BinaryTree &operator=(const BinaryTree &other) noexcept {
-    for (auto const &i : nodeMap) {
-      delete (*i).second;
+  void syncr(const BinaryTree &other) {
+    add_root(other.root->data);
+    while (nodeMap.size() != other.nodeMap.size()) {
+      for (auto const &i : other.nodeMap) {
+        try {
+          if (contains(i.second->data)) {
+            T f = i.first;
+            if (contains(i.second->left->data)) {
+              T sl = i.second->left->data;
+              add_left(f, sl);
+            }
+            if (contains(i.second->right->data)) {
+              T rl = i.second->left->data;
+              add_right(f, rl);
+            }
+          }
+        } catch (const invalid_argument &e) {
+          continue;
+        }
+      }
     }
-    this = BinaryTree<T>(other);
-    return *this;
-  }
-
-  //*Move Assignment Operator.
-  BinaryTree &operator=(BinaryTree &&other) noexcept {
-    for (auto const &i : nodeMap) {
-      delete (*i).second;
-    }
-    root = other.root;
-    itr = other.itr;
-    nodeMap = other.nodeMap;
-    setWasChanged = true;
-    for (auto const &i : other.nodeMap) {
-      (*i).second = nullptr;
-    }
-    other.nodeMap.clear();
-    other.itr.clear();
-    return *this;
   }
 };
-
 //*Helper class for redirecting cout stream to string .
 class coutRedirect {
 public:
@@ -189,21 +246,30 @@ public:
 
 //*Boolean method which is checking if the given key is contained in this tree .
 template <typename T> bool BinaryTree<T>::contains(T key) {
-  return nodeMap.count(key) > 0;
+  return nodeMap.count(key) > 0 && nodeMap[key] != nullptr;
 }
 
 //* Method which is moving a value in nodeMap from key source to destination .
 template <typename T>
 void BinaryTree<T>::moveN(T source, T destination, Node *father,
                           Direction direction) {
-  nodeMap[destination] = new Node(move(*nodeMap[source]));
-  delete nodeMap[source];
-  nodeMap[source] = nullptr;
-  nodeMap[destination]->data = destination;
-  if (direction == Left) {
-    (*father).left = nodeMap[destination];
-  } else {
-    (*father).right = nodeMap[destination];
+  auto entry = nodeMap.find(source);
+  if (entry != nodeMap.end()) {
+    auto const value = std::move(entry->second);
+    nodeMap.erase(entry);
+    nodeMap.insert({destination, std::move(value)});
+    nodeMap[destination]->data = destination;
+
+    // nodeMap[destination] = new Node((*nodeMap[source]));
+    // cout<<"P";
+    // delete nodeMap[source];
+    // nodeMap[source] = nullptr;
+    // nodeMap[destination]->data = destination;
+    if (direction == Left) {
+      (*father).left = nodeMap[destination];
+    } else {
+      (*father).right = nodeMap[destination];
+    }
   }
 }
 
@@ -243,8 +309,8 @@ template <typename T> BinaryTree<T> &BinaryTree<T>::add_root(T value) {
   if (root == nullptr) {
     root = new Node(value);
   } else {
-    nodeMap.erase((*root).data);
-    (*root).data = value;
+    nodeMap[root->data] = nullptr;
+    root->data = value;
   }
   nodeMap[value] = root;
   setWasChanged = true;
@@ -262,7 +328,7 @@ template <typename T> BinaryTree<T> &BinaryTree<T>::add_left(T pos, T value) {
       moveN(nodeMap[pos]->left->data, value, nodeMap[pos], Left);
     }
   } else {
-    throw invalid_argument{"No source node were found.1"};
+    throw invalid_argument{"No source node were found."};
   }
   setWasChanged = true;
   return *this;
@@ -279,7 +345,7 @@ template <typename T> BinaryTree<T> &BinaryTree<T>::add_right(T pos, T value) {
       moveN(nodeMap[pos]->right->data, value, nodeMap[pos], Right);
     }
   } else {
-    throw invalid_argument{"No source node were found.2"};
+    throw invalid_argument{"No source node were found."};
   }
   setWasChanged = true;
   return *this;
@@ -399,6 +465,13 @@ template <typename T> ostream &operator<<(ostream &os, BinaryTree<T> &bnrtree) {
   redirection.coutRedirectCancel();
   return os << out << endl;
 }
+
+template <typename T> void BinaryTree<T>::fillMap(BinaryTree<T>::Node *node) {
+  if (node == nullptr) {
+    return;
+  }
+  nodeMap[node->data] = node;
+  fillMap((*node).left);
+  fillMap((*node).right);
+}
 } // namespace ariel
-
-

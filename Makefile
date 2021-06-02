@@ -26,6 +26,8 @@ test3: TestRunner.o StudentTest3.o  $(OBJECTS)
 demo: Demo.o $(OBJECTS) 
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
+test: TestCounter.o Test.o $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 StudentTest1.cpp:  # Michael Trushkin
 	curl https://raw.githubusercontent.com/miko-t/binaryTreeCpp/main/Test.cpp > $@
@@ -35,7 +37,6 @@ StudentTest2.cpp:  # Yuval Moshe
 
 StudentTest3.cpp:  # Asahel Cohen
 	curl https://raw.githubusercontent.com/asahelcohen/BinaryTree-tamplate-cpp/main/Test.cpp > $@
-
 
 tidy:
 	clang-tidy sources/BinaryTree.hpp $(TIDY_FLAGS) --
@@ -48,8 +49,8 @@ valgrind: test1
 
 $(OBJECT_PATH)/%.o: $(SOURCE_PATH)/%.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) --compile $< -o $@
-test: TestCounter.o Test.o $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+
 clean:
 	rm -f $(OBJECTS) *.o test* demo*
 	rm -f StudentTest*.cpp
+

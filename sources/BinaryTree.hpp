@@ -81,8 +81,8 @@ template <typename T> class BinaryTree {
         delete rightN;
       }
       data = T(other).data;
-      swap(left, leftN);
-      swap(right, rightN);
+      std::swap(left, leftN);
+      std::swap(right, rightN);
       delete leftN;
       delete rightN;
       deleter((*other).root);
@@ -97,7 +97,6 @@ template <typename T> class BinaryTree {
       return *this;
     }
   };
-
 
   //*Parameters.
   bool setWasChanged = true;
@@ -117,7 +116,6 @@ template <typename T> class BinaryTree {
   void fillMap(Node *node);
 
 public:
-
   class Iterator {
 
   private:
@@ -196,7 +194,7 @@ public:
   //*Copy Constructor .
   BinaryTree<T>(BinaryTree<T> const &bnrtree) : nodeMap() {
     root = new Node(*(bnrtree.root));
-    fillMap(root);
+    syncr();
   }
 
   //*Move Constructor .
@@ -212,18 +210,17 @@ public:
 
   //*Assignment Operator .
   BinaryTree &operator=(const BinaryTree &other) noexcept {
-    if (&other == this) {
+    if (this == &other) {
       return *this;
     }
-    Node *temp = new Node(*(other.root));
     for (auto const &i : this->nodeMap) {
       delete i.second;
     }
-    root = temp;
-    itrClear();
-    nodeMap.clear();
-    setWasChanged = true;
-    fillMap(root);
+    Node n = Node(*other.root);
+    (*this).root = new Node(*other.root);
+    n.deleter(&n);
+    (*this).syncr();
+    (*this).setWasChanged = true;
     return *this;
   }
 
@@ -518,6 +515,9 @@ template <typename T> void BinaryTree<T>::fillMap(BinaryTree<T>::Node *node) {
   fillMap((*node).right);
 }
 } // namespace ariel
+
+
+
 
 
 

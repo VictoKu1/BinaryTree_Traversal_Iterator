@@ -23,10 +23,7 @@ test2: TestRunner.o StudentTest2.o  $(OBJECTS)
 test3: TestRunner.o StudentTest3.o  $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-demo: Demo.o $(OBJECTS) 
-	$(CXX) $(CXXFLAGS) $^ -o $@
-
-test: TestCounter.o Test.o $(OBJECTS)
+main: Main.o $(OBJECTS) 
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 StudentTest1.cpp:  # Michael Trushkin
@@ -53,4 +50,9 @@ $(OBJECT_PATH)/%.o: $(SOURCE_PATH)/%.cpp $(HEADERS)
 clean:
 	rm -f $(OBJECTS) *.o test* demo*
 	rm -f StudentTest*.cpp
+	rm -f main
+
+
+
+
 
